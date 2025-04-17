@@ -14,14 +14,19 @@ def check_health(endpoint):
     method = endpoint.get('method')
     headers = endpoint.get('headers')
     body = endpoint.get('body')
-
+    if (method == None):
+        method = "GET"
+    else:
+        pass
     try:
-        response = requests.request(method, url, headers=headers, json=body)
+        response = requests.request(method, url, headers=headers, data=body, timeout=0.5)
         if 200 <= response.status_code < 300:
             return "UP"
         else:
             return "DOWN"
     except requests.RequestException:
+        return "DOWN"
+    except requests.ConnectTimeout:
         return "DOWN"
 
 # Main function to monitor endpoints
@@ -33,7 +38,6 @@ def monitor_endpoints(file_path):
         for endpoint in config:
             domain = endpoint["url"].split("//")[-1].split("/")[0]
             result = check_health(endpoint)
-
             domain_stats[domain]["total"] += 1
             if result == "UP":
                 domain_stats[domain]["up"] += 1
@@ -42,7 +46,6 @@ def monitor_endpoints(file_path):
         for domain, stats in domain_stats.items():
             availability = round(100 * stats["up"] / stats["total"])
             print(f"{domain} has {availability}% availability percentage")
-
         print("---")
         time.sleep(15)
 
